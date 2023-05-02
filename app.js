@@ -17,7 +17,7 @@ mongoose.connect("mongodb+srv://omkar:omkar143@cluster0.cx20eke.mongodb.net/spar
 // add cors 
 var cors = require('cors');
 app.use(cors({
-  origin:'http://localhost:4200'
+  origin:['http://localhost:4200','https://spark-management.netlify.app/']
 }));
 
 
