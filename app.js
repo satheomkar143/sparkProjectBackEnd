@@ -12,13 +12,15 @@ var app = express();
 // add mongoose 
 var mongoose = require('mongoose');
 // mongoose.connect('mongodb://localhost/ricker');
+mongoose.set('strictQuery', true);
 mongoose.connect("mongodb+srv://omkar:omkar143@cluster0.cx20eke.mongodb.net/sparkManagement?retryWrites=true&w=majority");
 
 // add cors 
 var cors = require('cors');
 app.use(cors({
   // origin:'http://localhost:4200'
-  origin:'https://spark-management.netlify.app'
+  // origin:'https://spark-management.netlify.app'
+  origin : ["http://localhost:4200", "https://spark-management.netlify.app"]
 }));
 
 
