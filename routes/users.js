@@ -157,7 +157,7 @@ async function sendMail(user, callback) {
     from: '"Spark Institute, Pune', // sender address
     to: user.email, // list of receivers
     subject: "OTP for successfully login ", // Subject line
-    html: `<h1>Dear ${user.name}</h1><br>
+    html: `<h1>${user.name}</h1><br>
     <h4>To complete the process, please enter below One Time Password:</h4><br>
     <h3>OTP: ${generatedOTP}</h3><br>
     <h4>(This OTP is valid for next 15 minutes.)</h4>`,
