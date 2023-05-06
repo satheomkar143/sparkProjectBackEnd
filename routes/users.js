@@ -6,6 +6,7 @@ var Security = require("../models/security");
 var jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const security = require("../models/security");
+const multer = require("multer");
 
 router.post("/register", function (req, res, next) {
   var user = new User({
@@ -219,6 +220,7 @@ router.post("/admissionForm", function (req, res, next) {
     anyOtherCourses: req.body.anyOtherCourses,
     course: req.body.course,
     feesAllowed: req.body.feesAllowed,
+    studentProfilePhoto: req.body.studentProfilePhoto,
   });
 
   let promise = admissionForm.save();
@@ -476,6 +478,76 @@ router.get("/changeOTP", function (req, res, next) {
   saveOTP(generatedOTP);
 });
 
+router.post("/sendSocialLinkMail", (req, res) => {
+  let user = req.body;
+  sendSocialLinkMail(user, (info) => {
+    res.send(info);
+  });
+});
+
+async function sendSocialLinkMail(user, callback) {
+  // create reusable transporter object using the default SMTP transport
+  let transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: "satheomkar143@gmail.com",
+      pass: "nktypmeslnxfgwyj",
+    },
+  });
+
+  let mailOptions = {
+    from: 'Spark Institute, Pune', // sender address
+    to: user.email, // list of receivers
+    subject: "Spark Institute Social Links", // Subject line
+    html: `<h1>${user.name}</h1><br>
+    <h4>Thank you for join the SPARK IT institute, pune</h4><br>
+    <h4>Follow us to get updated with SPARK Institute.</h4><br>
+
+    <h3>Facebook:</h3>
+    <h4>https://www.facebook.com/SPARK.IT.Training</h4><br>
+
+    <h3>Twitter:</h3>
+    <h4>https://twitter.com/spark3e</h4><br>
+
+    <h3>Instagram:</h3>
+    <h4>https://www.instagram.com/sparkpune/</h4><br>
+    
+    <h3>LinkedIn:</h3>
+    <h4>https://www.linkedin.com/company/spark-it-training-institute/</h4><br>
+  
+    `
+  };
+
+  // send mail with defined transport object
+  let info = await transporter.sendMail(mailOptions);
+
+  callback(info);
+}
+
+// --------------file upload---------------
+const storage = multer.diskStorage({
+  destination: (req, file, callBack) => {
+      callBack(null, 'studentsProfilePhoto')
+  },
+  filename: (req, file, callBack) => {
+      callBack(null, file.originalname)
+  }
+})
+
+const upload = multer({ storage: storage })
+// let upload = multer({ dest: 'studentsProfilePhoto/' })
+
+router.post('/saveStudentPhoto', upload.single('file'), (req, res, next) => {
+  const file = req.file;
+  if (!file) {
+    const error = new Error('No File')
+    error.httpStatusCode = 400
+    return next(error)
+  }
+    res.send(file);
+})
 
 
 

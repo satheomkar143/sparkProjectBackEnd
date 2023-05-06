@@ -32,6 +32,7 @@ var schema = new Schema({
   anyOtherCourses:{type:String, require:true},
   course:{type:String, require:true},
   feesAllowed:{type:String, require:true},
+  studentProfilePhoto:{type:String, require:true},
 });
 
 
