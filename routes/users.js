@@ -2,6 +2,8 @@ var express = require("express");
 var router = express.Router();
 var User = require("../models/user");
 var AdmissionForm = require("../models/admissionForm");
+var EnquiryForm = require("../models/enquiryForm");
+var PlacedStudent = require("../models/placedStudentForm");
 var Security = require("../models/security");
 var jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
@@ -237,7 +239,7 @@ router.post("/admissionForm", function (req, res, next) {
 });
 
 router.get("/initialFetch", function (req, res, next) {
-  let promise = AdmissionForm.find({}).limit(10).sort({admissionDate: -1}).exec();
+  let promise = AdmissionForm.find({}).sort({admissionDate: -1, _id:-1}).limit(10).exec();
   promise.then(function (doc) {
     if (doc) {
       return res.status(200).json(doc);
@@ -334,7 +336,7 @@ router.post("/studentFilter", function (req, res, next) {
         },
       },
     ],
-  }).exec();
+  }).sort({admissionDate: -1, _id:-1}).exec();
   promise.then(function (doc) {
     if (doc.length !== 0) {
       return res.status(200).json(doc);
@@ -550,7 +552,203 @@ router.post('/saveStudentPhoto', upload.single('file'), (req, res, next) => {
 })
 
 
+router.get("/getEnquiryNo", function (req, res, next) {
+  let promise = Security.findOne({ userName: "omkar" }).exec();
+  promise.then(function (doc) {
+    if (doc) {
+      const enquiryNo  = doc.enquiryNo;
+      parseData = { enquiryNo: enquiryNo };
+
+      return res.status(200).json(parseData);
+    } else {
+      return res
+        .status(501)
+        .json({ message: "Error in fetch enquiry number from server." });
+    }
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Some internal error in enquiry number fetch" });
+  });
+});
+
+router.post("/getEnquiry", function (req, res, next) {
+  const id = req.body.id;
+
+  let promise = EnquiryForm.findOne({ _id: id }).exec();
+
+  promise.then(function (doc) {
+    return res.status(201).json(doc);
+  });
+
+  promise.catch(function (err) {
+    return res.status(501).json({ message: "Error for fetching enquiry.", err });
+  });
+});
+
+router.post("/enquiryForm", function (req, res, next) {
+  var enquiryForm = new EnquiryForm(req.body);
+
+  let promise = enquiryForm.save();
+
+  promise.then(function (doc) {
+    return res.status(201).json(doc);
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Error in save enquiry form in server." });
+  });
+});
+
+router.get("/increaseEnquiryNo", function (req, res, next) {
+  let promise = Security.findOne({ userName: "omkar" }).exec();
+  promise.then(function (doc) {
+    if (doc) {
+      let { enquiryNo } = doc;
+
+      enquiryNo = parseInt(enquiryNo);
+      enquiryNo++;
+
+      let promiseTwo = Security.updateOne(
+        { userName: "omkar" },
+        { $set: { enquiryNo: enquiryNo } }
+      ).exec();
+
+      promiseTwo.then(function (doc) {
+        return res.status(201).json(doc);
+      });
+
+      promiseTwo.catch(function (err) {
+        return res
+          .status(501)
+          .json({ message: "Error updating enquiry number.", err });
+      });
+    } else {
+      return res
+        .status(501)
+        .json({ message: "Error in fetch enquiry number from server." });
+    }
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Some internal error in security fetch" });
+  });
+});
+
+router.get("/FetchAllEnquiries", function (req, res, next) {
+  let promise = EnquiryForm.find({}).sort({enquiryDate: -1, _id:-1}).exec();
+  promise.then(function (doc) {
+    if (doc) {
+      return res.status(200).json(doc);
+    } else {
+      return res
+        .status(501)
+        .json({ message: "Error in fetch data in server." });
+    }
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Some internal error in enquiry fetch" });
+  });
+});
+
+router.post("/changePendingStatus", function(req,res){
+  let promise = EnquiryForm.updateOne(
+    { _id: req.body.id },
+    { $set: { pending: "false" } }
+  ).exec();
+
+  promise.then(function (doc) {
+    return res.status(201).json(doc);
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Error updating pending status.", err });
+  });
+})
+
+router.post("/deleteEnquiry", function (req, res, next) {
+  let promise = EnquiryForm.deleteOne({ _id: req.body.id }).exec();
+
+  promise.then(function (doc) {
+    return res.status(201).json(doc);
+  });
+
+  promise.catch(function (err) {
+    return res.status(501).json({ message: "Error in delete enquiry.", err });
+  });
+});
+
+router.post("/savePlacedStudent", function (req, res) {
+  var placedStudent = new PlacedStudent(req.body);
+
+  let promise = placedStudent.save();
+
+  promise.then(function (doc) {
+    return res.status(201).json(doc);
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Error in save Placed Student in server." });
+  });
+});
 
 
+router.get("/getAllPlacedStudent", function (req, res) {
+  let promise = PlacedStudent.find({}).sort({PlacedDate: -1, _id:-1}).exec();
+  promise.then(function (doc) {
+    if (doc) {
+      const idArray = doc.map(obj => obj.studentId);
+
+      let promiseTwo = AdmissionForm.find({ studentId: { $in: idArray } }).exec();
+
+      promiseTwo.then(function (studentData) {
+        return res.status(201).json({doc, studentData});
+      });
+    
+      promiseTwo.catch(function (err) {
+        return res
+          .status(501)
+          .json({ message: "Error in get Placed Student in server." });
+      });
+
+    } else {
+      return res
+        .status(501)
+        .json({ message: "Error in fetch data in server." });
+    }
+  });
+
+  promise.catch(function (err) {
+    return res
+      .status(501)
+      .json({ message: "Some internal error in placed student fetch" });
+  });
+});
+
+
+router.post("/deletePlacedStudent", function (req, res, next) {
+  let promise = PlacedStudent.deleteOne({ _id: req.body.id }).exec();
+
+  promise.then(function (doc) {
+    return res.status(201).json(doc);
+  });
+
+  promise.catch(function (err) {
+    return res.status(501).json({ message: "Error in delete placed student.", err });
+  });
+});
 
 module.exports = router;

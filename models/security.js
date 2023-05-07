@@ -7,7 +7,8 @@ var schema = new Schema({
     SecurityCode: {type:String, require:true},
     userName:{type:String, require:true},
     counter:{type:String, require:true},
-    prevMonth: {type:String, require:true}
+    prevMonth: {type:String, require:true},
+    enquiryNo: {type:String, require:true}
 });
 
 schema.statics.hashPassword = function hashPassword(OTP){
